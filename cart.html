@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Carrinho — Gih Modas</title>
+  <style>
+    :root{
+      --bg: #fff8fb;
+      --card:#fff;
+      --accent1:#ff6b9a;
+      --accent2:#5ec8ff;
+      --muted:#6b6b6b;
+      --radius:12px;
+      --shadow:0 10px 30px rgba(94,46,85,0.06);
+    }
+    *{box-sizing:border-box;font-family:"Poppins",system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+    body{margin:0;background:var(--bg);color:#222;padding:18px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(90deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+    h1{margin:0;font-size:18px}
+    main{max-width:1000px;margin:0 auto}
+    .cart-wrapper{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .cart-list{background:var(--card);padding:14px;border-radius:var(--radius);box-shadow:var(--shadow)}
+    .cart-item{display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed #eee;align-items:center}
+    .cart-item img{width:92px;height:92px;object-fit:cover;border-radius:8px}
+    .item-info{flex:1}
+    .item-title{font-weight:700}
+    .qty-controls{display:flex;gap:8px;align-items:center;margin-top:10px}
+    .qty-controls button{padding:6px 10px;border-radius:8px;border:0;background:#f0f0f0;cursor:pointer}
+    .remove{background:transparent;border:0;color:var(--muted);cursor:pointer}
+    .summary{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:var(--shadow);height:fit-content}
+    .summary h3{margin-top:0}
+    .summary-row{display:flex;justify-content:space-between;margin:10px 0;color:var(--muted)}
+    .total{font-size:20px;font-weight:900;color:var(--accent1)}
+    .whats-btn{display:block;text-align:center;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;padding:12px;border-radius:10px;text-decoration:none;font-weight:800;margin-top:12px}
+    .empty{background:var(--card);padding:28px;border-radius:var(--radius);text-align:center;box-shadow:var(--shadow)}
+    @media (max-width:900px){
+      .cart-wrapper{grid-template-columns:1fr}
+      .summary{order:2}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">GM</div>
+    <div>
+      <h1>Gih Modas — Carrinho</h1>
+      <p style="margin:4px 0 0;color:var(--muted);font-size:13px">Revise seus itens antes de finalizar</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="cart-wrapper">
+      <div>
+        <div id="cart-container" class="cart-list">
+          <!-- itens do carrinho serão injetados aqui -->
+        </div>
+        <div style="height:18px"></div>
+      </div>
+
+      <aside>
+        <div class="summary" id="summary-box">
+          <h3>Resumo do pedido</h3>
+          <div class="summary-row"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+          <div class="summary-row"><span>Frete</span><span id="shipping">R$ 0,00</span></div>
+          <div class="summary-row" style="border-top:1px solid #f0f0f0;padding-top:10px"><span class="total">Total</span><span class="total" id="grand-total">R$ 0,00</span></div>
+
+          <a id="whatsapp-link" class="whats-btn" href="#" target="_blank">Finalizar pelo WhatsApp</a>
+          <button id="clear-cart" style="margin-top:10px;width:100%;padding:10px;border-radius:8px;border:0;background:#f7f7f7;cursor:pointer">Limpar carrinho</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    /* Mesmos produtos do index (para consistência de informações) */
+    const PRODUCTS = [
+      {id: "p1", title: "Vestido Floral Midi", desc: "Vestido leve com estampa floral e corte midi.", price: 129.90, img: "./img/roupa1.jpg"},
+      {id: "p2", title: "Blusa Cropped Colorida", desc: "Cropped com cores vibrantes e tecido macio.", price: 59.90, img: "./img/roupa2.jpg"},
+      {id: "p3", title: "Saia Plissada", desc: "Saia plissada com cintura alta, perfeita para looks casuais.", price: 89.90, img: "./img/roupa3.jpg"},
+      {id: "p4", title: "Kimono Leve", desc: "Kimono estampado para sobreposição estilosa.", price: 79.90, img: "./img/roupa4.jpg"},
+      {id: "p5", title: "Conjunto Top + Short", desc: "Conjunto confortável para dia a dia.", price: 99.90, img: "./img/roupa5.jpg"},
+      {id: "p6", title: "Body Básico", desc: "Body versátil para combinar com várias peças.", price: 49.90, img: "./img/rouipa 6.jpg"}
+    ];
+    const FALLBACKS = {
+      p1: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&q=80",
+      p2: "https://images.unsplash.com/photo-1520975929492-5f6f2b1f3f6b?w=800&q=80",
+      p3: "https://images.unsplash.com/photo-1503342217505-b0a15d9f9f0e?w=800&q=80",
+      p4: "https://images.unsplash.com/photo-1520975918733-3a6d2b59d3fd?w=800&q=80",
+      p5: "https://images.unsplash.com/photo-1520975919636-6c936b3f5bbc?w=800&q=80",
+      p6: "https://images.unsplash.com/photo-1542816419-1b69d3b6f7aa?w=800&q=80"
+    };
+
+    const CART_KEY = "gihmodas_cart_v1";
+    function getCart(){ try{ const raw = localStorage.getItem(CART_KEY); return raw ? JSON.parse(raw) : {}; }catch(e){return{}} }
+    function saveCart(c){ localStorage.setItem(CART_KEY, JSON.stringify(c)); renderCart(); }
+    function removeFromCart(id){ const c = getCart(); delete c[id]; saveCart(c); }
+    function updateQuantity(id, qty){ const c = getCart(); if(qty <= 0){ removeFromCart(id); return; } c[id] = qty; saveCart(c); }
+
+    // renderiza itens do carrinho na página
+    const cartContainer = document.getElementById("cart-container");
+    function renderCart(){
+      const cart = getCart();
+      const keys = Object.keys(cart);
+      cartContainer.innerHTML = "";
+      if(keys.length === 0){
+        cartContainer.innerHTML = `<div class="empty"><h3>Seu carrinho está vazio</h3><p style="color:var(--muted)">Adicione produtos na página da loja.</p><div style="height:12px"></div><a href="index.html" style="text-decoration:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;padding:10px 14px;border-radius:10px;display:inline-block">Voltar à loja</a></div>`;
+        updateSummary();
+        return;
+      }
+
+      for(const id of keys){
+        const prod = PRODUCTS.find(p=>p.id === id);
+        const qty = Number(cart[id]);
+        const itemEl = document.createElement("div");
+        itemEl.className = "cart-item";
+        const imgSrc = prod ? prod.img : FALLBACKS[id];
+        itemEl.innerHTML = `
+          <img src="${imgSrc}" alt="${prod ? prod.title : id}" onerror="this.onerror=null;this.src='${FALLBACKS[id] || ''}'">
+          <div class="item-info">
+            <div class="item-title">${prod ? prod.title : id}</div>
+            <div style="color:var(--muted);font-size:13px">${prod ? prod.desc : ''}</div>
+            <div class="qty-controls">
+              <button class="dec" data-id="${id}">−</button>
+              <div style="min-width:36px;text-align:center;font-weight:700">${qty}</div>
+              <button class="inc" data-id="${id}">+</button>
+              <div style="flex:1;text-align:right;font-weight:800">R$ ${(prod.price * qty).toFixed(2).replace('.',',')}</div>
+            </div>
+            <div style="margin-top:8px"><button class="remove" data-id="${id}">Remover</button></div>
+          </div>
+        `;
+        cartContainer.appendChild(itemEl);
+      }
+      // listeners
+      cartContainer.querySelectorAll(".inc").forEach(btn=>{
+        btn.addEventListener("click", ()=> {
+          const id = btn.dataset.id;
+          const cart = getCart();
+          updateQuantity(id, Number(cart[id]) + 1);
+        });
+      });
+      cartContainer.querySelectorAll(".dec").forEach(btn=>{
+        btn.addEventListener("click", ()=> {
+          const id = btn.dataset.id;
+          const cart = getCart();
+          updateQuantity(id, Number(cart[id]) - 1);
+        });
+      });
+      cartContainer.querySelectorAll(".remove").forEach(btn=>{
+        btn.addEventListener("click", ()=> {
+          const id = btn.dataset.id;
+          removeFromCart(id);
+        });
+      });
+
+      updateSummary();
+    }
+
+    function updateSummary(){
+      const cart = getCart();
+      let subtotal = 0;
+      for(const id in cart){
+        const prod = PRODUCTS.find(p=>p.id === id);
+        if(!prod) continue;
+        subtotal += prod.price * Number(cart[id]);
+      }
+      // lógica simples para frete: grátis acima de R$200, caso contrário R$15
+      const shipping = subtotal === 0 ? 0 : (subtotal >= 200 ? 0 : 15.00);
+      const grand = subtotal + shipping;
+      document.getElementById("subtotal").textContent = `R$ ${subtotal.toFixed(2).replace('.',',')}`;
+      document.getElementById("shipping").textContent = `R$ ${shipping.toFixed(2).replace('.',',')}`;
+      document.getElementById("grand-total").textContent = `R$ ${grand.toFixed(2).replace('.',',')}`;
+
+      // atualiza link do WhatsApp com mensagem
+      const whatsLink = document.getElementById("whatsapp-link");
+      const WHATSAPP_NUMBER = "5516993777701"; // alterar aqui se quiser outro número (formato: 55 + DDD + número)
+      if(subtotal === 0){
+        whatsLink.href = "#";
+        whatsLink.style.opacity = "0.6";
+        whatsLink.onclick = (e)=>{ e.preventDefault(); };
+      }else{
+        whatsLink.style.opacity = "1";
+        whatsLink.onclick = null;
+        const lines = [];
+        lines.push("Olá, Gih Modas! Gostaria de finalizar meu pedido:");
+        for(const id in cart){
+          const prod = PRODUCTS.find(p=>p.id === id);
+          if(!prod) continue;
+          lines.push(`- ${prod.title} x ${cart[id]} = R$ ${(prod.price * Number(cart[id])).toFixed(2).replace('.',',')}`);
+        }
+        lines.push(`Subtotal: R$ ${subtotal.toFixed(2).replace('.',',')}`);
+        lines.push(`Frete: R$ ${shipping.toFixed(2).replace('.',',')}`);
+        lines.push(`Total: R$ ${grand.toFixed(2).replace('.',',')}`);
+        lines.push("");
+        lines.push("Nome: ");
+        lines.push("Endereço (ou retirar na loja): ");
+        lines.push("Observações: ");
+        const message = encodeURIComponent(lines.join("\n"));
+        whatsLink.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+      }
+
+      // também atualiza botão limpar
+      document.getElementById("clear-cart").onclick = ()=>{
+        localStorage.removeItem(CART_KEY);
+        renderCart();
+      };
+    }
+
+    // inicialização
+    renderCart();
+  </script>
+</body>
+</html>
